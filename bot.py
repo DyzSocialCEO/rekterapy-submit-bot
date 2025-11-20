@@ -97,7 +97,7 @@ def validate_submission_token(token):
         print(f"Token validation error: {e}")
         return False, None
 
-# async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     
     # Check if user came with a token
