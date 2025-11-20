@@ -104,11 +104,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         # No token - direct access denied
         await update.message.reply_text(
-            "⛔ *Access Denied*\n\n"
-            "This bot can only be accessed through the official Rekterapy app.\n\n"
-            "👉 Open @RekTerapyFM_Bot and click 'Share Your Story' to submit.",
-            parse_mode='Markdown'
-        )
+        "⛔ Access Denied\n\n"
+        "This bot can only be accessed through the official Rekterapy app.\n\n"
+        "👉 Open @RekTerapyFM_Bot and click Share Your Story to submit."
+    )
         return ConversationHandler.END
     
     # Get the token
@@ -118,13 +117,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     is_valid, user_data = validate_submission_token(token)
     
     if not is_valid:
-        await update.message.reply_text(
-            "⛔ *Invalid or Expired Token*\n\n"
-            "Your access token is invalid or has expired.\n\n"
-            "Please go back to @RekTerapyFM_Bot and click 'Share Your Story' again.\n\n"
-            "_Tokens expire after 1 hour for security._",
-            parse_mode='Markdown'
-        )
+await update.message.reply_text(
+        "⛔ Invalid or Expired Token\n\n"
+        "Your access token is invalid or has expired.\n\n"
+        "Please go back to @RekTerapyFM_Bot and click Share Your Story again.\n\n"
+        "Tokens expire after 1 hour for security."
+    )
         return ConversationHandler.END
     
     # Store validated user info for later use
