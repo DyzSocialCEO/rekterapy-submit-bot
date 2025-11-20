@@ -110,20 +110,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
         return ConversationHandler.END
     
-    # Get the token
+  # Get the token
     token = context.args[0]
     
     # Validate with API
     is_valid, user_data = validate_submission_token(token)
     
-if not is_valid:
-    await update.message.reply_text(
-        "⛔ Invalid or Expired Token\n\n"
-        "Your access token is invalid or has expired.\n\n"
-        "Please go back to @RekTerapyFM_Bot and click Share Your Story again.\n\n"
-        "Tokens expire after 1 hour for security."
-    )
-    return ConversationHandler.END
+    if not is_valid:
+        await update.message.reply_text(
+            "⛔ Invalid or Expired Token\n\n"
+            "Your access token is invalid or has expired.\n\n"
+            "Please go back to @RekTerapyFM_Bot and click Share Your Story again.\n\n"
+            "Tokens expire after 1 hour for security."
+        )
+        return ConversationHandler.END
     
     # Store validated user info for later use
     context.user_data['validated'] = True
