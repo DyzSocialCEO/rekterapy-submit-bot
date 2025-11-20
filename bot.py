@@ -81,7 +81,7 @@ def validate_submission_token(token):
         print(f"Token validation error: {e}")
         return False, None
     
-    def validate_submission_token(token):
+def validate_submission_token(token):
     """Validate token with the mini app API"""
     try:
         # Your actual Rekterapy app URL
