@@ -1,3 +1,4 @@
+import requests
 from threading import Thread
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import os
@@ -64,18 +65,96 @@ def check_rate_limit(wallet_address):
     conn.close()
     return result['count'] > 0
 
-# Start command - choose story type
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def validate_submission_token(token):
+    """Validate token with the mini app API"""
+    try:
+        # Replace with your actual Vercel app URL
+        API_URL = "https://your-app-url.vercel.app/api/verify-token"
+        
+        response = requests.get(f"{API_URL}?token={token}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            return data.get('valid', False), data
+        return False, None
+    except Exception as e:
+        print(f"Token validation error: {e}")
+        return False, None
+    
+    def validate_submission_token(token):
+    """Validate token with the mini app API"""
+    try:
+        # Your actual Rekterapy app URL
+        API_URL = "https://app.rekterapy.com/api/verify-token"
+        
+        response = requests.get(f"{API_URL}?token={token}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            return data.get('valid', False), data
+        return False, None
+    except Exception as e:
+        print(f"Token validation error: {e}")
+        return False, None
+
+# async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
+    
+    # Check if user came with a token
+    if not context.args:
+        # No token - direct access denied
+        await update.message.reply_text(
+            "⛔ *Access Denied*\n\n"
+            "This bot can only be accessed through the official Rekterapy app.\n\n"
+            "👉 Open @RekTerapyFM_Bot and click 'Share Your Story' to submit.",
+            parse_mode='Markdown'
+        )
+        return ConversationHandler.END
+    
+    # Get the token
+    token = context.args[0]
+    
+    # Validate with API
+    is_valid, user_data = validate_submission_token(token)
+    
+    if not is_valid:
+        await update.message.reply_text(
+            "⛔ *Invalid or Expired Token*\n\n"
+            "Your access token is invalid or has expired.\n\n"
+            "Please go back to @RekTerapyFM_Bot and click 'Share Your Story' again.\n\n"
+            "_Tokens expire after 1 hour for security._",
+            parse_mode='Markdown'
+        )
+        return ConversationHandler.END
+    
+    # Store validated user info for later use
+    context.user_data['validated'] = True
+    context.user_data['app_user_id'] = user_data.get('user_id')
     
     welcome_text = f"""
 🎭 *Welcome to Rekterapy Story Submission*
 
-Share your crypto journey - the wins AND the losses!
+🏆 *WIN 5000 STARS WEEKLY!* 
 
-Monthly Rewards:
-💰 Best REKT Story: $100
-🏆 Best MOON Story: $100
+Submit your best crypto story - wins or losses!
+
+✅ *What Makes a Winning Story:*
+- Authentic & verifiable (we check on-chain!)
+- Emotional impact & lessons learned  
+- Specific details (dates, amounts, tx hash)
+- Helps the community learn
+
+⚠️ *INSTANT BAN for:*
+- Fake stories or stolen content
+- Wrong wallet/CA addresses
+- Multiple accounts or spam
+- AI-generated content
+
+📝 *Rules:*
+- One submission per wallet per WEEK
+- All stories are manually verified
+- Winners announced every Sunday
+- False info = permanent ban
 
 *Choose your story type:*
     """
