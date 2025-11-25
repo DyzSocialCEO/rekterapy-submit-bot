@@ -51,8 +51,22 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Check rate limit
-def check_rate_limit(wallet_address):
+# Check rate limit by Telegram user ID
+def check_user_rate_limit(user_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT COUNT(*) as count 
+        FROM submissions 
+        WHERE user_id = %s 
+        AND submitted_at > %s
+    ''', (user_id, datetime.now() - timedelta(days=1)))
+    result = cursor.fetchone()
+    conn.close()
+    return result['count'] > 0
+
+# Check rate limit by wallet address
+def check_wallet_rate_limit(wallet_address):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('''
@@ -65,55 +79,17 @@ def check_rate_limit(wallet_address):
     conn.close()
     return result['count'] > 0
 
-def validate_submission_token(token):
-    """Validate token with the mini app API"""
-    try:
-        API_URL = "https://app.rekterapy.com/api/verify-token"
-        
-        print(f"Validating token: {token[:20]}...")
-        response = requests.get(f"{API_URL}?token={token}")
-        print(f"API Response Status: {response.status_code}")
-        print(f"API Response: {response.text}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            return data.get('valid', False), data
-        return False, None
-    except Exception as e:
-        print(f"Token validation error: {e}")
-        return False, None
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     
-    # Check if user came with a token
-    if not context.args:
-        # No token - direct access denied
+    # Check if this Telegram user already submitted today
+    if check_user_rate_limit(user.id):
         await update.message.reply_text(
-            "⛔ Access Denied\n\n"
-            "This bot can only be accessed through the official Rekterapy app.\n\n"
-            "👉 Open @RekTerapyFM_Bot and click Share Your Story to submit."
+            "⏰ You've already submitted a story today!\n\n"
+            "One submission per account per 24 hours.\n\n"
+            "Come back tomorrow to share another story! 🙏"
         )
         return ConversationHandler.END
-    
-    # Get the token
-    token = context.args[0]
-    
-    # Validate with API
-    is_valid, user_data = validate_submission_token(token)
-    
-    if not is_valid:
-        await update.message.reply_text(
-            "⛔ Invalid or Expired Token\n\n"
-            "Your access token is invalid or has expired.\n\n"
-            "Please go back to @RekTerapyFM_Bot and click Share Your Story again.\n\n"
-            "Tokens expire after 1 hour for security."
-        )
-        return ConversationHandler.END
-    
-    # Store validated user info for later use
-    context.user_data['validated'] = True
-    context.user_data['app_user_id'] = user_data.get('user_id')
     
     welcome_text = """🎭 Welcome to Rekterapy Story Submission
 
@@ -134,7 +110,8 @@ Submit your best crypto story - wins or losses!
 - AI-generated content
 
 📝 Rules:
-- One submission per wallet per WEEK
+- One submission per account per 24 hours
+- One submission per wallet per 24 hours
 - All stories are manually verified
 - Winners announced every Sunday
 - False info = permanent ban
@@ -179,10 +156,12 @@ async def collect_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ Please enter a valid wallet address:")
         return WALLET
     
-    if check_rate_limit(wallet):
+    # Check if wallet already used today
+    if check_wallet_rate_limit(wallet):
         await update.message.reply_text(
-            "⏰ You've already submitted today. One submission per wallet per 24 hours!\n\n"
-            "Come back tomorrow to share another story! 🙏"
+            "⚠️ This wallet has already been used to submit a story today!\n\n"
+            "One submission per wallet per 24 hours.\n\n"
+            "If this is your wallet, come back tomorrow! 🙏"
         )
         return ConversationHandler.END
     
