@@ -69,6 +69,24 @@ def init_db():
         )
     ''')
     
+    # Add missing columns to existing submissions table
+    alter_statements = [
+        "ALTER TABLE submissions ADD COLUMN IF NOT EXISTS week_number INT",
+        "ALTER TABLE submissions ADD COLUMN IF NOT EXISTS rejection_reason VARCHAR(100)",
+        "ALTER TABLE submissions ADD COLUMN IF NOT EXISTS score_authenticity INT DEFAULT 0",
+        "ALTER TABLE submissions ADD COLUMN IF NOT EXISTS score_emotional INT DEFAULT 0",
+        "ALTER TABLE submissions ADD COLUMN IF NOT EXISTS score_lesson INT DEFAULT 0",
+        "ALTER TABLE submissions ADD COLUMN IF NOT EXISTS score_detail INT DEFAULT 0",
+        "ALTER TABLE submissions ADD COLUMN IF NOT EXISTS score_storytelling INT DEFAULT 0",
+        "ALTER TABLE submissions ADD COLUMN IF NOT EXISTS total_moondust INT DEFAULT 0"
+    ]
+    
+    for stmt in alter_statements:
+        try:
+            cursor.execute(stmt)
+        except Exception as e:
+            print(f"Column may already exist: {e}")
+    
     # Submissions table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS submissions (
