@@ -68,26 +68,12 @@ def check_rate_limit(wallet_address):
 def validate_submission_token(token):
     """Validate token with the mini app API"""
     try:
-        # Replace with your actual Vercel app URL
-        API_URL = "https://your-app-url.vercel.app/api/verify-token"
-        
-        response = requests.get(f"{API_URL}?token={token}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            return data.get('valid', False), data
-        return False, None
-    except Exception as e:
-        print(f"Token validation error: {e}")
-        return False, None
-    
-def validate_submission_token(token):
-    """Validate token with the mini app API"""
-    try:
-        # Your actual Rekterapy app URL
         API_URL = "https://app.rekterapy.com/api/verify-token"
         
+        print(f"Validating token: {token[:20]}...")
         response = requests.get(f"{API_URL}?token={token}")
+        print(f"API Response Status: {response.status_code}")
+        print(f"API Response: {response.text}")
         
         if response.status_code == 200:
             data = response.json()
@@ -104,13 +90,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         # No token - direct access denied
         await update.message.reply_text(
-        "⛔ Access Denied\n\n"
-        "This bot can only be accessed through the official Rekterapy app.\n\n"
-        "👉 Open @RekTerapyFM_Bot and click Share Your Story to submit."
-    )
+            "⛔ Access Denied\n\n"
+            "This bot can only be accessed through the official Rekterapy app.\n\n"
+            "👉 Open @RekTerapyFM_Bot and click Share Your Story to submit."
+        )
         return ConversationHandler.END
     
-  # Get the token
+    # Get the token
     token = context.args[0]
     
     # Validate with API
@@ -129,33 +115,31 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['validated'] = True
     context.user_data['app_user_id'] = user_data.get('user_id')
     
-    welcome_text = f"""
-🎭 *Welcome to Rekterapy Story Submission*
+    welcome_text = """🎭 Welcome to Rekterapy Story Submission
 
-🏆 *WIN 5000 STARS WEEKLY!* 
+🏆 WIN 5000 STARS WEEKLY!
 
 Submit your best crypto story - wins or losses!
 
-✅ *What Makes a Winning Story:*
+✅ What Makes a Winning Story:
 - Authentic & verifiable (we check on-chain!)
 - Emotional impact & lessons learned  
 - Specific details (dates, amounts, tx hash)
 - Helps the community learn
 
-⚠️ *INSTANT BAN for:*
+⚠️ INSTANT BAN for:
 - Fake stories or stolen content
 - Wrong wallet/CA addresses
 - Multiple accounts or spam
 - AI-generated content
 
-📝 *Rules:*
+📝 Rules:
 - One submission per wallet per WEEK
 - All stories are manually verified
 - Winners announced every Sunday
 - False info = permanent ban
 
-*Choose your story type:*
-    """
+Choose your story type:"""
     
     keyboard = [
         [
@@ -167,7 +151,6 @@ Submit your best crypto story - wins or losses!
     
     await update.message.reply_text(
         welcome_text, 
-        parse_mode='Markdown',
         reply_markup=reply_markup
     )
     return STORY_TYPE
@@ -181,11 +164,11 @@ async def story_type_selected(update: Update, context: ContextTypes.DEFAULT_TYPE
     context.user_data['story_type'] = story_type
     
     if story_type == 'rekt':
-        prompt = "📉 *REKT STORY SUBMISSION*\n\nLet's document your loss for the community.\n\nFirst, what's your *wallet address*?"
+        prompt = "📉 REKT STORY SUBMISSION\n\nLet's document your loss for the community.\n\nFirst, what's your wallet address?"
     else:
-        prompt = "🚀 *MOON STORY SUBMISSION*\n\nLet's celebrate your win!\n\nFirst, what's your *wallet address*?"
+        prompt = "🚀 MOON STORY SUBMISSION\n\nLet's celebrate your win!\n\nFirst, what's your wallet address?"
     
-    await query.edit_message_text(prompt, parse_mode='Markdown')
+    await query.edit_message_text(prompt)
     return WALLET
 
 # Collect wallet
@@ -206,8 +189,7 @@ async def collect_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['wallet'] = wallet
     await update.message.reply_text(
         "✅ Wallet saved!\n\n"
-        "Now, the *contract address* of the token:",
-        parse_mode='Markdown'
+        "Now, the contract address of the token:"
     )
     return CONTRACT
 
@@ -217,11 +199,11 @@ async def collect_contract(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['contract'] = contract
     
     if context.user_data['story_type'] == 'rekt':
-        prompt = "How much did you *lose*? (e.g., '$5000' or '2 ETH'):"
+        prompt = "How much did you lose? (e.g., '$5000' or '2 ETH'):"
     else:
-        prompt = "How much did you *gain*? (e.g., '$50000' or '10x'):"
+        prompt = "How much did you gain? (e.g., '$50000' or '10x'):"
     
-    await update.message.reply_text(prompt, parse_mode='Markdown')
+    await update.message.reply_text(prompt)
     return AMOUNT
 
 # Collect amount
@@ -231,16 +213,16 @@ async def collect_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if context.user_data['story_type'] == 'rekt':
         prompt = (
-            "💔 *Tell us your REKT story* (max 750 chars):\n\n"
-            "_How did it happen? What went wrong? Share the pain!_"
+            "💔 Tell us your REKT story (max 750 chars):\n\n"
+            "How did it happen? What went wrong? Share the pain!"
         )
     else:
         prompt = (
-            "🎉 *Tell us your MOON story* (max 750 chars):\n\n"
-            "_How did you spot it? When did you buy? How did you win?_"
+            "🎉 Tell us your MOON story (max 750 chars):\n\n"
+            "How did you spot it? When did you buy? How did you win?"
         )
     
-    await update.message.reply_text(prompt, parse_mode='Markdown')
+    await update.message.reply_text(prompt)
     return STORY
 
 # Collect story and save
@@ -282,17 +264,15 @@ async def collect_story(update: Update, context: ContextTypes.DEFAULT_TYPE):
     type_text = "REKT" if story_type == 'rekt' else "MOON"
     
     # Send to admin
-    admin_text = f"""
-{emoji} *NEW {type_text} STORY* #{submission_id}
+    admin_text = f"""{emoji} NEW {type_text} STORY #{submission_id}
 
 👤 User: @{user.username or 'No username'} ({user.id})
-💳 Wallet: `{context.user_data['wallet']}`
-📜 Contract: `{context.user_data['contract']}`
+💳 Wallet: {context.user_data['wallet']}
+📜 Contract: {context.user_data['contract']}
 💰 Amount: {context.user_data['amount']}
 
-📖 *Story:*
-{story}
-    """
+📖 Story:
+{story}"""
     
     keyboard = [
         [
@@ -305,25 +285,24 @@ async def collect_story(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
         chat_id=ADMIN_ID,
         text=admin_text,
-        parse_mode='Markdown',
         reply_markup=reply_markup
     )
     
     # Confirm to user
     if story_type == 'rekt':
         confirm = (
-            "📉 *REKT Story Submitted!*\n\n"
+            "📉 REKT Story Submitted!\n\n"
             "Your loss has been documented. If approved, you're eligible for the $100 monthly REKT award!\n\n"
             "Stay strong, degen. We've all been there. 🫂"
         )
     else:
         confirm = (
-            "🚀 *MOON Story Submitted!*\n\n"
+            "🚀 MOON Story Submitted!\n\n"
             "Your win has been recorded! If approved, you're eligible for the $100 monthly MOON award!\n\n"
             "Congrats on the gains! 🎉"
         )
     
-    await update.message.reply_text(confirm, parse_mode='Markdown')
+    await update.message.reply_text(confirm)
     
     context.user_data.clear()
     return ConversationHandler.END
@@ -362,17 +341,15 @@ async def admin_pending(update: Update, context: ContextTypes.DEFAULT_TYPE):
         emoji = "📉" if sub['story_type'] == 'rekt' else "🚀"
         type_text = sub['story_type'].upper()
         
-        text = f"""
-{emoji} *{type_text} Submission #{sub['id']}*
+        text = f"""{emoji} {type_text} Submission #{sub['id']}
 👤 User: {sub['username']} ({sub['user_id']})
-💳 Wallet: `{sub['wallet_address']}`
-📜 Contract: `{sub['contract_address']}`
+💳 Wallet: {sub['wallet_address']}
+📜 Contract: {sub['contract_address']}
 💰 Amount: {sub['amount']}
 📅 Submitted: {sub['submitted_at'].strftime('%Y-%m-%d %H:%M')}
 
 📖 Story:
-{sub['story']}
-        """
+{sub['story']}"""
         
         keyboard = [
             [
@@ -384,7 +361,6 @@ async def admin_pending(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         await update.message.reply_text(
             text,
-            parse_mode='Markdown',
             reply_markup=reply_markup
         )
 
@@ -409,12 +385,11 @@ async def admin_approved(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("No approved submissions yet.")
         return
     
-    response = "*APPROVED STORIES (Copy for app):*\n\n"
+    response = "APPROVED STORIES (Copy for app):\n\n"
     
     for sub in submissions:
         emoji = "📉" if sub['story_type'] == 'rekt' else "🚀"
-        response += f"""
----
+        response += f"""---
 {emoji} #{sub['id']} ({sub['story_type'].upper()})
 Wallet: {sub['wallet_address'][:6]}...{sub['wallet_address'][-4:]}
 Amount: {sub['amount']}
@@ -423,7 +398,7 @@ Story: {sub['story']}
 
 """
     
-    await update.message.reply_text(response, parse_mode='Markdown')
+    await update.message.reply_text(response)
 
 # Handle review buttons
 async def handle_review(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -452,11 +427,10 @@ async def handle_review(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer(f"Submission {new_status}!")
     
     await query.edit_message_text(
-        query.message.text + f"\n\n✅ *STATUS: {new_status.upper()}*",
-        parse_mode='Markdown'
+        query.message.text + f"\n\n✅ STATUS: {new_status.upper()}"
     )
 
-    # Simple health check server for Render
+# Simple health check server for Render
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
